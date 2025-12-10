@@ -81,7 +81,7 @@ class ModelTrainer:
 
             r2_square = r2_score(y_test, predicted)
 
-            return r2_square
+            return r2_square, best_model_name
             
         except Exception as e:
             logging.info("Exception occurred in initiate_model_training")
@@ -94,7 +94,8 @@ if __name__ == '__main__':
     data_transformation = DataTransformation()
     train_arr, test_arr, _ = data_transformation.initiate_data_transformation(train_data, test_data)
     
-    r2_score = objmt.initiate_model_training(train_arr, test_arr)
+    r2_score, best_model_name = objmt.initiate_model_training(train_arr, test_arr)
+    print(best_model_name)
     print(r2_score)
     logging.info(f"R2 Score: {r2_score}")
     logging.info("Model Training Completed")
