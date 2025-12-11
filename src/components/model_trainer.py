@@ -55,7 +55,49 @@ class ModelTrainer:
                     "AdaBoost Regressor": AdaBoostRegressor()
             }
 
-            best_model_report:dict = evaluate_models(X_train, y_train, X_test, y_test, models)
+            # Hyperparameter grids for each model (reduced for faster training)
+            params = {
+                "Linear Regression": {},  # No hyperparameters to tune for basic Linear Regression
+                
+                "Decision Tree": {
+                    'max_depth': [5, 10, 20],
+                    'min_samples_split': [2, 10],
+                    'min_samples_leaf': [1, 4]
+                },
+                
+                "Random Forest Regressor": {
+                    'n_estimators': [64, 128],
+                    'max_depth': [10, 20],
+                    'min_samples_split': [2, 5],
+                },
+                
+                "XGBRegressor": {
+                    'learning_rate': [0.05, 0.1],
+                    'n_estimators': [100, 200],
+                    'max_depth': [3, 6],
+                },
+                
+                "CatBoosting Regressor": {
+                    'depth': [6, 8],
+                    'learning_rate': [0.05, 0.1],
+                    'iterations': [100, 200]
+                },
+                
+                "AdaBoost Regressor": {
+                    'n_estimators': [50, 100],
+                    'learning_rate': [0.05, 0.1, 1.0]
+                }
+            }
+
+            logging.info("Starting model evaluation with hyperparameter tuning...")
+            best_model_report: dict = evaluate_models(
+                X_train=X_train,
+                y_train=y_train,
+                X_test=X_test,
+                y_test=y_test,
+                models=models,
+                params=params
+            )
             best_model_score = best_model_report['best_model']['score']
 
             if best_model_score < 0.6:
@@ -64,18 +106,12 @@ class ModelTrainer:
             logging.info("Best model found on both training and testing dataset")
 
             best_model_name = best_model_report['best_model']['name']
-            best_model = models[best_model_name]
+            best_model = best_model_report['best_model']['model']  # Get the tuned model from report
 
-            if best_model_name == 'Linear Regression':
-                save_object(
-                    file_path=self.model_trainer_config.trained_model_file_path,
-                    obj=best_model
-                )
-            else:
-                save_object(
-                    file_path=self.model_trainer_config.trained_model_file_path,
-                    obj=best_model
-                )
+            save_object(
+                file_path=self.model_trainer_config.trained_model_file_path,
+                obj=best_model
+            )
             
             predicted = best_model.predict(X_test)
 
@@ -99,3 +135,9 @@ if __name__ == '__main__':
     print(r2_score)
     logging.info(f"R2 Score: {r2_score}")
     logging.info("Model Training Completed")
+
+
+
+    
+
+    

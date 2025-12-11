@@ -1,14 +1,16 @@
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV
 from src.logger import logging
 import sys
 from src.exception import CustomException
 import os
 import pickle
 
-def evaluate_models(X_train, y_train, X_test, y_test, models):
+def evaluate_models(X_train, y_train, X_test, y_test, models, params=None):
     """
-    This function evaluates multiple regression models and returns a report with performance metrics.
+    This function evaluates multiple regression models with optional hyperparameter tuning
+    using GridSearchCV and returns a report with performance metrics.
     
     Args:
         X_train: Training features
@@ -16,6 +18,8 @@ def evaluate_models(X_train, y_train, X_test, y_test, models):
         X_test: Test features
         y_test: Test target
         models: Dictionary of model names and model instances
+        params: Dictionary of hyperparameter grids for each model (optional)
+                If None or empty for a model, no tuning is performed.
     
     Returns:
         dict: Dictionary containing model performance metrics and best model information
@@ -26,12 +30,33 @@ def evaluate_models(X_train, y_train, X_test, y_test, models):
         for model_name, model in models.items():
             logging.info(f"Training {model_name}...")
             
-            # Train the model
-            model.fit(X_train, y_train)
+            # Check if hyperparameters are provided for this model
+            model_params = params.get(model_name, {}) if params else {}
             
-            # Make predictions
-            y_train_pred = model.predict(X_train)
-            y_test_pred = model.predict(X_test)
+            if model_params:
+                # Perform hyperparameter tuning with GridSearchCV
+                logging.info(f"Performing hyperparameter tuning for {model_name}...")
+                grid_search = GridSearchCV(
+                    estimator=model,
+                    param_grid=model_params,
+                    cv=3,
+                    scoring='r2',
+                    n_jobs=-1,
+                    verbose=0
+                )
+                grid_search.fit(X_train, y_train)
+                
+                # Get best model from GridSearchCV
+                best_estimator = grid_search.best_estimator_
+                logging.info(f"Best params for {model_name}: {grid_search.best_params_}")
+            else:
+                # Train without hyperparameter tuning
+                model.fit(X_train, y_train)
+                best_estimator = model
+            
+            # Make predictions using the best estimator
+            y_train_pred = best_estimator.predict(X_train)
+            y_test_pred = best_estimator.predict(X_test)
             
             # Evaluate on training set
             train_mae = mean_absolute_error(y_train, y_train_pred)
@@ -53,7 +78,7 @@ def evaluate_models(X_train, y_train, X_test, y_test, models):
                 'test_mae': test_mae,
                 'test_rmse': test_rmse,
                 'test_r2': test_r2,
-                'model': model  # Store the trained model
+                'model': best_estimator  # Store the best trained model
             }
             
             logging.info(f"{model_name} - Train R2: {train_r2:.4f}, Test R2: {test_r2:.4f}")
