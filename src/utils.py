@@ -127,4 +127,16 @@ def save_object(file_path: str, obj) -> None:
     except Exception as e:
         logging.info("Exception occurred in save_object")
         raise CustomException(e, sys)
+    
+
+def load_object(file_path: str):
+
+    try:
+        with open(file_path, 'rb') as f:
+            obj = pickle.load(f)
+        logging.info(f"Loaded object from: {file_path}")
+        return obj
+    except Exception as e:
+        logging.info("Exception occurred in load_object")
+        raise CustomException(e, sys)
 
