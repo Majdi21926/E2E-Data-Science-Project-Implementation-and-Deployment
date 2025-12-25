@@ -1,5 +1,6 @@
 ## This script is for flask app^
 from doctest import debug
+from email.mime import application
 import re
 from flask import Flask, jsonify, request, render_template
 import numpy as np
@@ -9,6 +10,7 @@ import pandas as pd
 from src.pipeline.predict_pipeline import CustomData, PredictPipeline
 
 app = Flask(__name__)
+application = app
 
 ## Route for home page
 @app.route('/')
@@ -39,4 +41,4 @@ def predict_datapoint():
     
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=8000, debug=False)
