@@ -10,6 +10,10 @@ import pandas as pd
 from src.pipeline.predict_pipeline import CustomData, PredictPipeline
 
 app = Flask(__name__)
+
+app.config["PROPAGATE_EXCEPTIONS"] = True
+app.config["DEBUG"] = True
+
 application = app
 
 ## Route for home page
