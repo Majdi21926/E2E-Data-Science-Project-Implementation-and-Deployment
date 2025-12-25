@@ -1,8 +1,6 @@
 ## This script is for flask app^
 from doctest import debug
 import re
-
-from posthog import host
 from flask import Flask, jsonify, request, render_template
 import numpy as np
 import pickle
