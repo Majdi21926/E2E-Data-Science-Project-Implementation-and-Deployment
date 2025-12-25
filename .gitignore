@@ -1,5 +1,4 @@
 # Environment
-artifacts/
 .env
 
 # Byte-compiled / optimized / DLL files
