@@ -83,7 +83,7 @@ jobs:
         
 
   continuous-deployment:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-and-push-ecr-image
     if: needs.build-and-push-ecr-image.outputs.image-pushed == 'true'
     steps:
