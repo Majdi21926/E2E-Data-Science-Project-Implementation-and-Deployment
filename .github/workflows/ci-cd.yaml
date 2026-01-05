@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'README.md'
   
   workflow_dispatch:
 
@@ -27,10 +25,10 @@ jobs:
         run: echo "Running unit tests"
 
   build-and-push-ecr-image:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: integration
     outputs:
-      image-pushed: ${{ steps.build-image.outputs.image-pushed }}
+      image-pushed: ${{ steps.set-output.outputs.image-pushed }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -80,7 +78,15 @@ jobs:
             --platform linux/amd64 \
             -t $REGISTRY/$REPOSITORY:latest \
             -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-        
+
+      - name: Set image-pushed output
+        id: set-output
+        run: |
+          if [ "${{ steps.build-image.outcome }}" == "success" ]; then
+            echo "image-pushed=true" >> $GITHUB_OUTPUT
+          else
+            echo "image-pushed=false" >> $GITHUB_OUTPUT
+          fi
 
   continuous-deployment:
     runs-on: self-hosted
