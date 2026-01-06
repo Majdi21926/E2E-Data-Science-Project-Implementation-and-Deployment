@@ -111,15 +111,35 @@ jobs:
         run: |
           docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_REPOSITORY_NAME }}:latest
       
+      - name: Stop and remove existing container
+        run: |
+          docker stop studentperformance || true
+          docker rm studentperformance || true
+
       - name: Run Docker Image to serve users
         run: |
-          docker run -d -p 80:80 --ipc="host" --name studentperformance -e 'AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}' -e 'AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}' -e 'AWS_REGION=${{ secrets.AWS_REGION }}' ${{ secrets.AWS_ECR_LOGIN_URI }}/${{ secrets.AWS_REPOSITORY_NAME }}:latest
+          docker run -d -p 80:80 --ipc="host" --name studentperformance \
+            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            -e AWS_REGION=${{ secrets.AWS_REGION }} \
+            ${{ steps.login-ecr.outputs.registry }}/${{ secrets.AWS_REPOSITORY_NAME }}:latest
       
       - name: Verify Deployment
         run: |
-          sleep 10
-          curl -f http://localhost || exit 1
-          echo "Deployment successful"
+          echo "Waiting for container to be ready..."
+          for i in {1..12}; do
+            echo "Attempt $i/12..."
+            if curl -f http://localhost 2>/dev/null; then
+              echo "Deployment successful!"
+              exit 0
+            fi
+            echo "Not ready yet, checking container status..."
+            docker ps -a --filter name=studentperformance
+            sleep 5
+          done
+          echo "Deployment verification failed. Container logs:"
+          docker logs studentperformance
+          exit 1
       
       - name: Clean previous images and containers
         run: |
